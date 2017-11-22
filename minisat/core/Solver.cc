@@ -51,6 +51,12 @@ static IntOption     opt_min_learnts_lim   (_cat, "min-learnts", "Minimum learnt
 // Constructor/Destructor:
 
 
+std::string toString(Lit & l)
+{
+    return ((l.x % 2) ? "not " : "") +  std::to_string(l.x / 2);
+}
+
+
 Solver::Solver() :
 
     // Parameters (user settable):
@@ -229,10 +235,12 @@ bool Solver::satisfied(const Clause& c) const {
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
 void Solver::cancelUntil(int level) {
+    traceFile << "Backtrack to " << level << std::endl;
     if (decisionLevel() > level){
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
             assigns [x] = l_Undef;
+            traceFile << "Unset " << x << std::endl;
             if (phase_saving > 1 || (phase_saving == 1 && c > trail_lim.last()))
                 polarity[x] = sign(trail[c]);
             insertVarOrder(x); }
@@ -486,6 +494,7 @@ void Solver::analyzeFinal(Lit p, LSet& out_conflict)
 void Solver::uncheckedEnqueue(Lit p, CRef from)
 {
     assert(value(p) == l_Undef);
+    traceFile << "Set " << toString(p) << std::endl;
     assigns[var(p)] = lbool(!sign(p));
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
@@ -550,6 +559,7 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
+                traceFile << "Conflict with " << toString(p) << std::endl;
             }else
                 uncheckedEnqueue(first, cr);
 
@@ -708,6 +718,7 @@ lbool Solver::search(int nof_conflicts)
     starts++;
 
     for (;;){
+        traceFile << "Decision level " << decisionLevel() << std::endl;
         CRef confl = propagate();
         if (confl != CRef_Undef){
             // CONFLICT
@@ -783,6 +794,7 @@ lbool Solver::search(int nof_conflicts)
                 if (next == lit_Undef)
                     // Model found:
                     return l_True;
+                traceFile << "Branch on " << toString(next) << std::endl;
             }
 
             // Increase decision level and enqueue 'next'
@@ -863,6 +875,7 @@ lbool Solver::solve_()
     int curr_restarts = 0;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
+        traceFile << "Restart " << curr_restarts << std::endl;
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
         curr_restarts++;
@@ -1063,4 +1076,9 @@ void Solver::garbageCollect()
         printf("|  Garbage collection:   %12d bytes => %12d bytes             |\n", 
                ca.size()*ClauseAllocator::Unit_Size, to.size()*ClauseAllocator::Unit_Size);
     to.moveTo(ca);
+}
+
+void Solver::setTraceFile(const std::string & name)
+{
+    traceFile.open(name);
 }

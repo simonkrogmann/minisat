@@ -92,6 +92,12 @@ int main(int argc, char** argv)
         if (in == NULL)
             printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
         
+        if (argc >= 4)
+        {
+            printf("Writing trace to %s\n", argv[3]);
+            S.setTraceFile(argv[3]);
+        }
+
         if (S.verbosity > 0){
             printf("============================[ Problem Statistics ]=============================\n");
             printf("|                                                                             |\n"); }
