@@ -718,7 +718,7 @@ lbool Solver::search(int nof_conflicts)
     starts++;
 
     for (;;){
-        traceFile << "Decision level " << decisionLevel() << std::endl;
+        traceFile << "Enter decision level " << decisionLevel() << std::endl;
         CRef confl = propagate();
         if (confl != CRef_Undef){
             // CONFLICT
