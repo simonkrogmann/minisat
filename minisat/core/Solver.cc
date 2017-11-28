@@ -53,7 +53,7 @@ static IntOption     opt_min_learnts_lim   (_cat, "min-learnts", "Minimum learnt
 
 std::string toString(Lit & l)
 {
-    return ((l.x % 2) ? "not " : "") +  std::to_string(l.x / 2);
+    return ((l.x % 2) ? "not " : "") + std::to_string(l.x / 2 + 1);
 }
 
 
