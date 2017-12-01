@@ -301,6 +301,8 @@ protected:
 public:
     void setTraceFile(const std::string & name);
 private:
+    void trace(char label, int data);
+    void traceLiteral(char label, Lit literal);
     std::ofstream traceFile;
 };
 

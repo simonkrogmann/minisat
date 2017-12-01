@@ -5,15 +5,20 @@ Generate a tracefile with
 ./minisat [options] <problem-file> <solution-file> <trace-file>
 This offers information about the operation of the solver.
 The following events are recorded:
-- Backtrack to <level>
-- Set [not] <variable>
+< Backtrack to <level>
++ Set [not] <variable>
 - Unset <variable>
-- Conflict with [not] <variable>
-- Enter decision level <level>
-- Branch on [not] <variable>
-- Restart <number of restarts>
+C Conflict with [not] <variable>
+> Enter decision level <level>
+B Branch on [not] <variable>
+R Restart <number of restarts>
 
-This data can be used for visualization, for example highlighting the currently set variables in an incidence graph.
+Each event is written into the file as:
+<event character><4 byte binary representation of variable/level>
+The integer is negative for false variables.
+
+This data can be used for visualization, for example highlighting the
+currently set variables in an incidence graph.
 
 ================================================================================
 Quick Install

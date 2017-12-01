@@ -51,12 +51,6 @@ static IntOption     opt_min_learnts_lim   (_cat, "min-learnts", "Minimum learnt
 // Constructor/Destructor:
 
 
-std::string toString(Lit & l)
-{
-    return ((l.x % 2) ? "not " : "") + std::to_string(l.x / 2 + 1);
-}
-
-
 Solver::Solver() :
 
     // Parameters (user settable):
@@ -235,19 +229,22 @@ bool Solver::satisfied(const Clause& c) const {
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
 void Solver::cancelUntil(int level) {
-    traceFile << "Backtrack to " << level << std::endl;
+    // Backtrack until
+    trace('<', level);
     if (decisionLevel() > level){
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
             assigns [x] = l_Undef;
-            traceFile << "Unset " << x << std::endl;
+            // Unset
+            trace('-', x);
             if (phase_saving > 1 || (phase_saving == 1 && c > trail_lim.last()))
                 polarity[x] = sign(trail[c]);
             insertVarOrder(x); }
         qhead = trail_lim[level];
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
-    } }
+    }
+}
 
 
 //=================================================================================================
@@ -494,7 +491,8 @@ void Solver::analyzeFinal(Lit p, LSet& out_conflict)
 void Solver::uncheckedEnqueue(Lit p, CRef from)
 {
     assert(value(p) == l_Undef);
-    traceFile << "Set " << toString(p) << std::endl;
+    // Set
+    traceLiteral('+', p);
     assigns[var(p)] = lbool(!sign(p));
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
@@ -559,7 +557,8 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-                traceFile << "Conflict with " << toString(p) << std::endl;
+                // Conflict
+                traceLiteral('C', p);
             }else
                 uncheckedEnqueue(first, cr);
 
@@ -718,7 +717,8 @@ lbool Solver::search(int nof_conflicts)
     starts++;
 
     for (;;){
-        traceFile << "Enter decision level " << decisionLevel() << std::endl;
+        // Enter Decision Level
+        trace('>', decisionLevel());
         CRef confl = propagate();
         if (confl != CRef_Undef){
             // CONFLICT
@@ -794,7 +794,8 @@ lbool Solver::search(int nof_conflicts)
                 if (next == lit_Undef)
                     // Model found:
                     return l_True;
-                traceFile << "Branch on " << toString(next) << std::endl;
+                // branch on
+                traceLiteral('B', next);
             }
 
             // Increase decision level and enqueue 'next'
@@ -875,7 +876,7 @@ lbool Solver::solve_()
     int curr_restarts = 0;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
-        traceFile << "Restart " << curr_restarts << std::endl;
+        trace('R', curr_restarts);
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
         curr_restarts++;
@@ -1080,5 +1081,22 @@ void Solver::garbageCollect()
 
 void Solver::setTraceFile(const std::string & name)
 {
-    traceFile.open(name);
+    traceFile.open(name, std::ios::binary | std::ios::out);
+}
+
+void Solver::trace(char label, int data)
+{
+    traceFile.write(&label, 1);
+    //traceFile << data;
+    traceFile.write(reinterpret_cast<const char *>(&data), sizeof(data));
+}
+
+void Solver::traceLiteral(char label, Lit literal)
+{
+    bool negated = literal.x % 2;
+    int variable = literal.x / 2 + 1;
+    if (negated) variable = -variable;
+    traceFile.write(&label, 1);
+    //traceFile << variable;
+    traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
 }
