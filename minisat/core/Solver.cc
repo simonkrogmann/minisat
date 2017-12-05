@@ -235,8 +235,6 @@ void Solver::cancelUntil(int level) {
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
             assigns [x] = l_Undef;
-            // Unset
-            trace('-', x);
             if (phase_saving > 1 || (phase_saving == 1 && c > trail_lim.last()))
                 polarity[x] = sign(trail[c]);
             insertVarOrder(x); }
@@ -795,11 +793,12 @@ lbool Solver::search(int nof_conflicts)
                     // Model found:
                     return l_True;
                 // branch on
-                traceLiteral('B', next);
             }
 
             // Increase decision level and enqueue 'next'
             newDecisionLevel();
+            traceLiteral('B', next);
+            cancelNext = true;
             uncheckedEnqueue(next);
         }
     }
@@ -1093,8 +1092,13 @@ void Solver::trace(char label, int data)
 
 void Solver::traceLiteral(char label, Lit literal)
 {
-    bool negated = literal.x % 2;
-    int variable = literal.x / 2 + 1;
+    if (cancelNext)
+    {
+        cancelNext = false;
+        return;
+    }
+    bool negated = sign(literal);
+    int variable = var(literal) + 1;
     if (negated) variable = -variable;
     traceFile.write(&label, 1);
     //traceFile << variable;

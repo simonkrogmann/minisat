@@ -304,6 +304,7 @@ private:
     void trace(char label, int data);
     void traceLiteral(char label, Lit literal);
     std::ofstream traceFile;
+    bool cancelNext = false;
 };
 
 

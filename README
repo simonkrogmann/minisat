@@ -7,7 +7,6 @@ This offers information about the operation of the solver.
 The following events are recorded:
 < Backtrack to <level>
 + Set [not] <variable>
-- Unset <variable>
 C Conflict with [not] <variable>
 > Enter decision level <level>
 B Branch on [not] <variable>
