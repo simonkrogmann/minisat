@@ -595,9 +595,10 @@ void Solver::reduceDB()
     // and clauses with activity smaller than 'extra_lim':
     for (i = j = 0; i < learnts.size(); i++){
         Clause& c = ca[learnts[i]];
-        if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim))
+        if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim)) {
             removeClause(learnts[i]);
-            // TODO trace deleted clauses
+            traceUnlearnedClause(c);
+        }
         else
             learnts[j++] = learnts[i];
     }
@@ -734,7 +735,7 @@ lbool Solver::search(int nof_conflicts)
                 CRef cr = ca.alloc(learnt_clause, true);
                 learnts.push(cr);
 
-                traceClause(learnt_clause, true);
+                traceLearnedClause(learnt_clause);
 
                 attachClause(cr);
                 claBumpActivity(ca[cr]);
@@ -1109,9 +1110,9 @@ void Solver::traceLiteral(char label, Lit literal)
     traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
 }
 
-void Solver::traceClause(const vec<Lit>& clause, bool learned)
+void Solver::traceLearnedClause(const vec<Lit>& clause)
 {
-    auto label = learned ? 'L' : 'U';
+    auto label = 'L';
     traceFile.write(&label, 1);
     int size = clause.size();
     traceFile.write(reinterpret_cast<const char *>(&size), sizeof(size));
@@ -1123,7 +1124,28 @@ void Solver::traceClause(const vec<Lit>& clause, bool learned)
         if (negated) variable = -variable;
 
         //traceFile << variable;
+        auto unusedChar = 'x';
+        traceFile.write(&unusedChar, 1);
         traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
     }
+}
 
+void Solver::traceUnlearnedClause(const Clause& clause)
+{
+    auto label = 'U';
+    traceFile.write(&label, 1);
+    int size = clause.size();
+    traceFile.write(reinterpret_cast<const char *>(&size), sizeof(size));
+
+    for(size_t i = 0; i < size; ++i) {
+        auto literal = clause[i];
+        bool negated = sign(literal);
+        int variable = var(literal) + 1;
+        if (negated) variable = -variable;
+
+        //traceFile << variable;
+        auto unusedChar = 'x';
+        traceFile.write(&unusedChar, 1);
+        traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
+    }
 }

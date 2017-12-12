@@ -303,7 +303,8 @@ public:
 private:
     void trace(char label, int data);
     void traceLiteral(char label, Lit literal);
-    void traceClause(const vec<Lit>& clause, bool learned);
+    void traceLearnedClause(const vec<Lit>& clause);
+    void traceUnlearnedClause(const Clause& clause);
     std::ofstream traceFile;
     bool cancelNext = false;
 };
