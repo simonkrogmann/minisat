@@ -880,7 +880,7 @@ lbool Solver::solve_()
     int curr_restarts = 0;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
-        traceRestart();
+        // traceRestart();
         trace('R', curr_restarts);
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
