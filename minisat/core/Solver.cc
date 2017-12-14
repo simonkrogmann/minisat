@@ -880,6 +880,7 @@ lbool Solver::solve_()
     int curr_restarts = 0;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
+        traceRestart();
         trace('R', curr_restarts);
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
@@ -1085,6 +1086,7 @@ void Solver::garbageCollect()
 
 void Solver::setTraceFile(const std::string & name)
 {
+    m_name = name;
     traceFile.open(name, std::ios::binary | std::ios::out);
 }
 
@@ -1148,4 +1150,12 @@ void Solver::traceUnlearnedClause(const Clause& clause)
         traceFile.write(&unusedChar, 1);
         traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
     }
+}
+
+void Solver::traceRestart()
+{
+    traceFile.close();
+    traceFile.open(m_name, std::ios::out | std::ios::trunc);
+    traceFile.close();
+    traceFile.open(m_name, std::ios::binary | std::ios::out);
 }
