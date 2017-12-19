@@ -301,10 +301,10 @@ protected:
 public:
     void setTraceFile(const std::string & name);
 private:
+    int nextLearntID;
     void trace(char label, int data);
     void traceLiteral(char label, Lit literal);
-    void traceLearnedClause(const vec<Lit>& clause);
-    void traceUnlearnedClause(const Clause& clause);
+    void traceLearnedClause(const Clause& clause);
     void traceRestart();
     std::ofstream traceFile;
     bool cancelNext = false;

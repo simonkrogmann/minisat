@@ -144,6 +144,7 @@ class Clause {
         unsigned has_extra : 1;
         unsigned reloced   : 1;
         unsigned size      : 27; }                        header;
+    int m_id = -1;
     union { Lit lit; float act; uint32_t abs; CRef rel; } data[0];
 
     friend class ClauseAllocator;
@@ -170,6 +171,7 @@ class Clause {
     // NOTE: This constructor cannot be used directly (doesn't allocate enough memory).
     Clause(const Clause& from, bool use_extra){
         header           = from.header;
+        m_id               = from.m_id;
         header.has_extra = use_extra;   // NOTE: the copied clause may lose the extra field.
 
         for (int i = 0; i < from.size(); i++)
@@ -216,6 +218,8 @@ public:
 
     Lit          subsumes    (const Clause& other) const;
     void         strengthen  (Lit p);
+    int &        id          ()              { return m_id; }
+    int          id          () const        { return m_id; }
 };
 
 

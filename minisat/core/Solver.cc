@@ -82,7 +82,7 @@ Solver::Solver() :
     // Statistics: (formerly in 'SolverStats')
     //
   , solves(0), starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
-  , dec_vars(0), num_clauses(0), num_learnts(0), clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
+  , dec_vars(0), num_clauses(0), num_learnts(0), clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0), nextLearntID(0)
 
   , watches            (WatcherDeleted(ca))
   , order_heap         (VarOrderLt(activity))
@@ -182,11 +182,17 @@ bool Solver::addClause_(vec<Lit>& ps)
 
 
 void Solver::attachClause(CRef cr){
-    const Clause& c = ca[cr];
+    Clause& c = ca[cr];
     assert(c.size() > 1);
     watches[~c[0]].push(Watcher(cr, c[1]));
     watches[~c[1]].push(Watcher(cr, c[0]));
-    if (c.learnt()) num_learnts++, learnts_literals += c.size();
+    if (c.learnt())
+    {
+        num_learnts++;
+        learnts_literals += c.size();
+        c.id() = nextLearntID;
+        ++nextLearntID;
+    }
     else            num_clauses++, clauses_literals += c.size();
 }
 
@@ -596,8 +602,8 @@ void Solver::reduceDB()
     for (i = j = 0; i < learnts.size(); i++){
         Clause& c = ca[learnts[i]];
         if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim)) {
+            trace('U', c.id());
             removeClause(learnts[i]);
-            traceUnlearnedClause(c);
         }
         else
             learnts[j++] = learnts[i];
@@ -734,10 +740,8 @@ lbool Solver::search(int nof_conflicts)
             }else{
                 CRef cr = ca.alloc(learnt_clause, true);
                 learnts.push(cr);
-
-                traceLearnedClause(learnt_clause);
-
                 attachClause(cr);
+                traceLearnedClause(ca[cr]);
                 claBumpActivity(ca[cr]);
                 uncheckedEnqueue(learnt_clause[0], cr);
             }
@@ -875,6 +879,8 @@ lbool Solver::solve_()
         printf("|           |    Vars  Clauses Literals |    Limit  Clauses Lit/Cl |          |\n");
         printf("===============================================================================\n");
     }
+
+    nextLearntID = nClauses();
 
     // Search:
     int curr_restarts = 0;
@@ -1107,48 +1113,15 @@ void Solver::traceLiteral(char label, Lit literal)
     bool negated = sign(literal);
     int variable = var(literal) + 1;
     if (negated) variable = -variable;
-    traceFile.write(&label, 1);
-    //traceFile << variable;
-    traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
+    trace(label, variable);
 }
 
-void Solver::traceLearnedClause(const vec<Lit>& clause)
+void Solver::traceLearnedClause(const Clause& clause)
 {
-    auto label = 'L';
-    traceFile.write(&label, 1);
-    int size = clause.size();
-    traceFile.write(reinterpret_cast<const char *>(&size), sizeof(size));
-
-    for(size_t i = 0; i < size; ++i) {
-        auto literal = clause[i];
-        bool negated = sign(literal);
-        int variable = var(literal) + 1;
-        if (negated) variable = -variable;
-
-        //traceFile << variable;
-        auto unusedChar = 'x';
-        traceFile.write(&unusedChar, 1);
-        traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
-    }
-}
-
-void Solver::traceUnlearnedClause(const Clause& clause)
-{
-    auto label = 'U';
-    traceFile.write(&label, 1);
-    int size = clause.size();
-    traceFile.write(reinterpret_cast<const char *>(&size), sizeof(size));
-
-    for(size_t i = 0; i < size; ++i) {
-        auto literal = clause[i];
-        bool negated = sign(literal);
-        int variable = var(literal) + 1;
-        if (negated) variable = -variable;
-
-        //traceFile << variable;
-        auto unusedChar = 'x';
-        traceFile.write(&unusedChar, 1);
-        traceFile.write(reinterpret_cast<const char *>(&variable), sizeof(variable));
+    trace('L', clause.id());
+    trace('S', clause.size());
+    for(size_t i = 0; i < clause.size(); ++i) {
+        traceLiteral('x', clause[i]);
     }
 }
 
