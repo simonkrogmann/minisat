@@ -19,6 +19,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include <math.h>
+#include <vector>
 
 #include "minisat/mtl/Alg.h"
 #include "minisat/mtl/Sort.h"
@@ -882,6 +883,8 @@ lbool Solver::solve_()
 
     nextLearntID = nClauses();
 
+    writeDummyHeader();
+
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef){
@@ -892,6 +895,7 @@ lbool Solver::solve_()
         if (!withinBudget()) break;
         curr_restarts++;
     }
+
 
     if (verbosity >= 1)
         printf("===============================================================================\n");
@@ -905,6 +909,7 @@ lbool Solver::solve_()
         ok = false;
 
     cancelUntil(0);
+    writeHeader(false, curr_restarts);
     return status;
 }
 
@@ -1131,4 +1136,41 @@ void Solver::traceRestart()
     traceFile.open(m_name, std::ios::out | std::ios::trunc);
     traceFile.close();
     traceFile.open(m_name, std::ios::binary | std::ios::out);
+}
+
+template<typename T>
+void writeToHeader(std::ofstream & file, const bool dryRun, const T & data, int & position)
+{
+    if (!dryRun)
+    {
+        file.seekp(position);
+        file.write(reinterpret_cast<const char *>(&data), data);
+    }
+    position += sizeof(data);
+}
+
+int Solver::writeHeader(const bool dryRun, const int numberOfRestarts)
+{
+    if (!dryRun)
+    {
+        traceFile.close();
+        traceFile.open(m_name, std::ios::binary | std::ios::out | std::ios::in);
+    }
+    int headerSize;
+    headerSize = sizeof(headerSize) + sizeof(numberOfRestarts);
+    int position = 0;
+    writeToHeader(traceFile, dryRun, headerSize, position);
+    writeToHeader(traceFile, dryRun, numberOfRestarts, position);
+    assert(headerSize == position);
+    return headerSize;
+}
+
+void Solver::writeDummyHeader()
+{
+    const auto headerSize = writeHeader(true, -1);
+    const char c = 0;
+    for (int i = 0; i < headerSize; ++i)
+    {
+        traceFile.write(&c, 1);
+    }
 }

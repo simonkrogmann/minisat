@@ -306,6 +306,8 @@ private:
     void traceLiteral(char label, Lit literal);
     void traceLearnedClause(const Clause& clause);
     void traceRestart();
+    int writeHeader(const bool dryRun, const int numberOfRestarts);
+    void writeDummyHeader();
     std::ofstream traceFile;
     bool cancelNext = false;
     std::string m_name;
