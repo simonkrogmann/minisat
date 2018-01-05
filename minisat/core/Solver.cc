@@ -1115,7 +1115,7 @@ void Solver::trace(char label, int data)
     }
     if (label == '<')
     {
-        assert(data < levelForAssert);
+        assert(data < levelForAssert || data == 0);
         levelForAssert = data;
     }
     traceFile.write(&label, 1);
