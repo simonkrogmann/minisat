@@ -1144,7 +1144,7 @@ void writeToHeader(std::ofstream & file, const bool dryRun, const T & data, int 
     if (!dryRun)
     {
         file.seekp(position);
-        file.write(reinterpret_cast<const char *>(&data), data);
+        file.write(reinterpret_cast<const char *>(&data), sizeof(data));
     }
     position += sizeof(data);
 }
@@ -1162,6 +1162,10 @@ int Solver::writeHeader(const bool dryRun, const int numberOfRestarts)
     writeToHeader(traceFile, dryRun, headerSize, position);
     writeToHeader(traceFile, dryRun, numberOfRestarts, position);
     assert(headerSize == position);
+    if (!dryRun)
+    {
+        assert(position == traceFile.tellp());
+    }
     return headerSize;
 }
 
