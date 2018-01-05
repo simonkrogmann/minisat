@@ -249,6 +249,7 @@ void Solver::cancelUntil(int level) {
         trail.shrink(trail.size() - trail_lim[level]);
         trail_lim.shrink(trail_lim.size() - level);
     }
+    assert(decisionLevel() == level);
 }
 
 
@@ -725,7 +726,6 @@ lbool Solver::search(int nof_conflicts)
 
     for (;;){
         // Enter Decision Level
-        trace('>', decisionLevel());
         CRef confl = propagate();
         if (confl != CRef_Undef){
             // CONFLICT
@@ -734,6 +734,7 @@ lbool Solver::search(int nof_conflicts)
 
             learnt_clause.clear();
             analyze(confl, learnt_clause, backtrack_level);
+            assert(backtrack_level < decisionLevel());
             cancelUntil(backtrack_level);
 
             if (learnt_clause.size() == 1){
@@ -784,6 +785,7 @@ lbool Solver::search(int nof_conflicts)
                 Lit p = assumptions[decisionLevel()];
                 if (value(p) == l_True){
                     // Dummy decision level:
+                    assert(false);
                     newDecisionLevel();
                 }else if (value(p) == l_False){
                     analyzeFinal(~p, conflict);
@@ -807,6 +809,7 @@ lbool Solver::search(int nof_conflicts)
 
             // Increase decision level and enqueue 'next'
             newDecisionLevel();
+            trace('>', decisionLevel());
             traceLiteral('B', next);
             cancelNext = true;
             uncheckedEnqueue(next);
@@ -1101,8 +1104,20 @@ void Solver::setTraceFile(const std::string & name)
     traceFile.open(name, std::ios::binary | std::ios::out);
 }
 
+int levelForAssert = 0;
+
 void Solver::trace(char label, int data)
 {
+    if (label == '>')
+    {
+        assert(data == levelForAssert + 1);
+        levelForAssert = data;
+    }
+    if (label == '<')
+    {
+        assert(data < levelForAssert);
+        levelForAssert = data;
+    }
     traceFile.write(&label, 1);
     //traceFile << data;
     traceFile.write(reinterpret_cast<const char *>(&data), sizeof(data));
@@ -1112,6 +1127,7 @@ void Solver::traceLiteral(char label, Lit literal)
 {
     if (cancelNext)
     {
+        assert(label == '+');
         cancelNext = false;
         return;
     }
@@ -1158,10 +1174,14 @@ int Solver::writeHeader(const bool dryRun, const int numberOfRestarts)
     }
     int headerSize;
     headerSize = sizeof(headerSize) + sizeof(numberOfRestarts);
+    if (headerSize % 5 != 0)
+    {
+        headerSize += 5 - (headerSize % 5);
+    }
     int position = 0;
     writeToHeader(traceFile, dryRun, headerSize, position);
     writeToHeader(traceFile, dryRun, numberOfRestarts, position);
-    assert(headerSize == position);
+    assert(headerSize >= position);
     if (!dryRun)
     {
         assert(position == traceFile.tellp());
