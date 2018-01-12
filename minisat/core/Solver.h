@@ -300,6 +300,7 @@ protected:
 
 public:
     void setTraceFile(const std::string & name);
+    void setSimplifiedFile(const std::string & name, const std::string & header);
 private:
     int nextLearntID;
     void trace(char label, int data);
@@ -309,6 +310,8 @@ private:
     int writeHeader(const bool dryRun, const int numberOfRestarts);
     void writeDummyHeader();
     std::ofstream traceFile;
+    std::ofstream simplifiedFile;
+    bool simplifiedPrinted = false;
     bool cancelNext = false;
     std::string m_name;
 };

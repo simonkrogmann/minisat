@@ -54,7 +54,7 @@ static void SIGINT_exit(int) {
 int main(int argc, char** argv)
 {
     try {
-        setUsageHelp("USAGE: %s [options] <input-file> <result-output-file> <trace-file>\n\n  where input may be either in plain or gzipped DIMACS.\n");
+        setUsageHelp("USAGE: %s [options] <input-file> <output-directory>\n\n  where input may be either in plain or gzipped DIMACS.\n");
         setX86FPUPrecision();
         
         // Extra options:
@@ -85,18 +85,33 @@ int main(int argc, char** argv)
         if (cpu_lim != 0) limitTime(cpu_lim);
         if (mem_lim != 0) limitMemory(mem_lim);
 
-        if (argc == 1)
-            printf("Reading from standard input... Use '--help' for help.\n");
-
-        gzFile in = (argc == 1) ? gzdopen(0, "rb") : gzopen(argv[1], "rb");
-        if (in == NULL)
-            printf("ERROR! Could not open file: %s\n", argc == 1 ? "<stdin>" : argv[1]), exit(1);
-        
-        if (argc >= 4)
+        if (argc < 3)
         {
-            printf("Writing trace to %s\n", argv[3]);
-            S.setTraceFile(argv[3]);
+            printUsageAndExit(argc, argv, true);
         }
+
+        gzFile in = gzopen(argv[1], "rb");
+        if (in == NULL)
+            printf("ERROR! Could not open file: %s\n", argv[1]), exit(1);
+
+        std::string in_name = argv[1];
+        auto loc = in_name.rfind("/");
+        loc = (loc == in_name.npos) ? 0 : (loc + 1);
+        in_name = in_name.substr(loc);
+        std::string out_name = argv[2];
+        out_name = out_name + ((out_name.back() != '/') ? "/" : "") + in_name;
+        if (out_name.substr(out_name.length() - 4) == ".cnf")
+        {
+            out_name = out_name.substr(0, out_name.length() - 4);
+        }
+
+        auto trace_name = out_name + ".trace";
+        auto solution_name = out_name + ".solution";
+        auto simplified_name = out_name + ".simplified";
+        printf("Writing trace to %s\n", trace_name.c_str());
+        S.setTraceFile(trace_name);
+        printf("Writing simplified problem to %s\n", simplified_name.c_str());
+        S.setSimplifiedFile(simplified_name, "c Simplified from " + in_name + "\n");
 
         if (S.verbosity > 0){
             printf("============================[ Problem Statistics ]=============================\n");
@@ -104,7 +119,7 @@ int main(int argc, char** argv)
         
         parse_DIMACS(in, S, (bool)strictp);
         gzclose(in);
-        FILE* res = (argc >= 3) ? fopen(argv[2], "wb") : NULL;
+        FILE* res = (argc >= 3) ? fopen(solution_name.c_str(), "wb") : NULL;
 
         if (S.verbosity > 0){
             printf("|  Number of variables:  %12d                                         |\n", S.nVars());

@@ -19,7 +19,6 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 **************************************************************************************************/
 
 #include <math.h>
-#include <vector>
 
 #include "minisat/mtl/Alg.h"
 #include "minisat/mtl/Sort.h"
@@ -775,6 +774,22 @@ lbool Solver::search(int nof_conflicts)
             if (decisionLevel() == 0 && !simplify())
                 return l_False;
 
+            if (!simplifiedPrinted)
+            {
+                simplifiedFile << "p " << nVars() << " " << nClauses() << std::endl;
+                for (int i = 0; i < clauses.size(); ++i)
+                {
+                    Clause& c = ca[clauses[i]];
+                    for (int j = 0; j < c.size(); j++)
+                    {
+                        simplifiedFile << (sign(c[j]) ? "-" : "") << var(c[j]) << " ";
+                    }
+                    simplifiedFile << "0" << std::endl;
+                }
+                simplifiedFile.close();
+                simplifiedPrinted = true;
+            }
+
             if (learnts.size()-nAssigns() >= max_learnts)
                 // Reduce the set of learnt clauses:
                 reduceDB();
@@ -1102,6 +1117,12 @@ void Solver::setTraceFile(const std::string & name)
 {
     m_name = name;
     traceFile.open(name, std::ios::binary | std::ios::out);
+}
+
+void Solver::setSimplifiedFile(const std::string & name, const std::string & header)
+{
+    simplifiedFile.open(name);
+    simplifiedFile << header;
 }
 
 int levelForAssert = 0;
