@@ -311,7 +311,6 @@ private:
     void writeDummyHeader();
     std::ofstream traceFile;
     std::ofstream simplifiedFile;
-    bool simplifiedPrinted = false;
     bool cancelNext = false;
     std::string m_name;
 };

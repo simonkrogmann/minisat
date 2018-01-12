@@ -697,7 +697,6 @@ bool Solver::simplify()
 
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
-
     return true;
 }
 
@@ -773,22 +772,6 @@ lbool Solver::search(int nof_conflicts)
             // Simplify the set of problem clauses:
             if (decisionLevel() == 0 && !simplify())
                 return l_False;
-
-            if (!simplifiedPrinted)
-            {
-                simplifiedFile << "p " << nVars() << " " << nClauses() << std::endl;
-                for (int i = 0; i < clauses.size(); ++i)
-                {
-                    Clause& c = ca[clauses[i]];
-                    for (int j = 0; j < c.size(); j++)
-                    {
-                        simplifiedFile << (sign(c[j]) ? "-" : "") << var(c[j]) << " ";
-                    }
-                    simplifiedFile << "0" << std::endl;
-                }
-                simplifiedFile.close();
-                simplifiedPrinted = true;
-            }
 
             if (learnts.size()-nAssigns() >= max_learnts)
                 // Reduce the set of learnt clauses:
@@ -901,7 +884,17 @@ lbool Solver::solve_()
 
     nextLearntID = nClauses();
 
-    writeDummyHeader();
+    simplifiedFile << "p " << nVars() << " " << nClauses() << std::endl;
+    for (int i = 0; i < clauses.size(); ++i)
+    {
+        Clause& c = ca[clauses[i]];
+        for (int j = 0; j < c.size(); j++)
+        {
+            simplifiedFile << (sign(c[j]) ? "-" : "") << var(c[j]) << " ";
+        }
+        simplifiedFile << "0" << std::endl;
+    }
+    simplifiedFile.close();
 
     // Search:
     int curr_restarts = 0;
@@ -1117,6 +1110,7 @@ void Solver::setTraceFile(const std::string & name)
 {
     m_name = name;
     traceFile.open(name, std::ios::binary | std::ios::out);
+    writeDummyHeader();
 }
 
 void Solver::setSimplifiedFile(const std::string & name, const std::string & header)
