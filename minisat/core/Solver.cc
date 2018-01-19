@@ -1200,6 +1200,7 @@ int Solver::writeHeader(const bool dryRun, const int numberOfRestarts)
     if (!dryRun)
     {
         assert(position == traceFile.tellp());
+        traceFile.close();
     }
     return headerSize;
 }
