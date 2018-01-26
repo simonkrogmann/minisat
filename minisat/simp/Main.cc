@@ -54,7 +54,7 @@ static void SIGINT_exit(int) {
 int main(int argc, char** argv)
 {
     try {
-        setUsageHelp("USAGE: %s [options] <input-file> <output-directory>\n\n  where input may be either in plain or gzipped DIMACS.\n");
+        setUsageHelp("USAGE: %s [options] <input-file> <output-basename>\n\n  where input may be either in plain or gzipped DIMACS.\n");
         setX86FPUPrecision();
         
         // Extra options:
@@ -94,20 +94,11 @@ int main(int argc, char** argv)
         if (in == NULL)
             printf("ERROR! Could not open file: %s\n", argv[1]), exit(1);
 
-        std::string in_name = argv[1];
-        auto loc = in_name.rfind("/");
-        loc = (loc == in_name.npos) ? 0 : (loc + 1);
-        in_name = in_name.substr(loc);
-        std::string out_name = argv[2];
-        out_name = out_name + ((out_name.back() != '/') ? "/" : "") + in_name;
-        if (out_name.substr(out_name.length() - 4) == ".cnf")
-        {
-            out_name = out_name.substr(0, out_name.length() - 4);
-        }
-
-        auto trace_name = out_name + ".trace";
-        auto solution_name = out_name + ".solution";
-        auto simplified_name = out_name + ".simplified";
+        const std::string in_name = argv[1];
+        const std::string out_name = argv[2];
+        const auto trace_name = out_name + ".trace";
+        const auto solution_name = out_name + ".solution";
+        const auto simplified_name = out_name + ".simplified";
         printf("Writing trace to %s\n", trace_name.c_str());
         S.setTraceFile(trace_name);
         printf("Writing simplified problem to %s\n", simplified_name.c_str());
