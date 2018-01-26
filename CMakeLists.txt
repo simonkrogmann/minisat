@@ -64,7 +64,7 @@ endif()
 set_target_properties(minisat-lib-static PROPERTIES OUTPUT_NAME "minisat")
 set_target_properties(minisat-lib-shared
   PROPERTIES
-    OUTPUT_NAME "minisat"
+    OUTPUT_NAME "minisat" 
     VERSION ${MINISAT_VERSION}
     SOVERSION ${MINISAT_SOVERSION})
 
@@ -73,7 +73,7 @@ set_target_properties(minisat_simp       PROPERTIES OUTPUT_NAME "minisat-solver"
 #--------------------------------------------------------------------------------------------------
 # Installation targets:
 
-install(TARGETS minisat-lib-static minisat-lib-shared minisat_core minisat_simp
+install(TARGETS minisat-lib-static minisat-lib-shared minisat_core minisat_simp 
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION lib
         ARCHIVE DESTINATION lib)

@@ -697,6 +697,7 @@ bool Solver::simplify()
 
     simpDB_assigns = nAssigns();
     simpDB_props   = clauses_literals + learnts_literals;   // (shouldn't depend on stats really, but it will do for now)
+
     return true;
 }
 
@@ -802,7 +803,6 @@ lbool Solver::search(int nof_conflicts)
                 if (next == lit_Undef)
                     // Model found:
                     return l_True;
-                // branch on
             }
 
             // Increase decision level and enqueue 'next'
@@ -906,7 +906,6 @@ lbool Solver::solve_()
         if (!withinBudget()) break;
         curr_restarts++;
     }
-
 
     if (verbosity >= 1)
         printf("===============================================================================\n");

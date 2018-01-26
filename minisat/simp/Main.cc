@@ -86,9 +86,7 @@ int main(int argc, char** argv)
         if (mem_lim != 0) limitMemory(mem_lim);
 
         if (argc < 3)
-        {
             printUsageAndExit(argc, argv, true);
-        }
 
         gzFile in = gzopen(argv[1], "rb");
         if (in == NULL)
