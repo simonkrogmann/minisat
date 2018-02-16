@@ -35,6 +35,10 @@ include_directories(${minisat_SOURCE_DIR})
 
 add_definitions(-D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -w)
 
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+  add_definitions(-Wno-reserved-user-defined-literal)
+endif()
+
 #--------------------------------------------------------------------------------------------------
 # Build Targets:
 
