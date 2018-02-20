@@ -302,12 +302,12 @@ public:
     void setTraceFile(const std::string & name);
     void setSimplifiedFile(const std::string & name, const std::string & header);
 private:
-    int nextLearntID;
-    void trace(char label, int data);
+    int32_t nextLearntID;
+    void trace(char label, int32_t data);
     void traceLiteral(char label, Lit literal);
-    void traceLearnedClause(const Clause& clause);
+    void traceLearntClause(const Clause& clause);
     void traceRestart();
-    int writeHeader(const bool dryRun, const int numberOfRestarts);
+    int32_t writeHeader(const bool dryRun, const int32_t numberOfRestarts);
     void writeDummyHeader();
     std::ofstream traceFile;
     std::ofstream simplifiedFile;

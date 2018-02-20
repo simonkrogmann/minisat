@@ -144,7 +144,7 @@ class Clause {
         unsigned has_extra : 1;
         unsigned reloced   : 1;
         unsigned size      : 27; }                        header;
-    int m_id = -1;
+    int32_t m_id = -1;
     union { Lit lit; float act; uint32_t abs; CRef rel; } data[0];
 
     friend class ClauseAllocator;
@@ -218,8 +218,8 @@ public:
 
     Lit          subsumes    (const Clause& other) const;
     void         strengthen  (Lit p);
-    int &        id          ()              { return m_id; }
-    int          id          () const        { return m_id; }
+    int32_t &        id          ()              { return m_id; }
+    int32_t          id          () const        { return m_id; }
 };
 
 

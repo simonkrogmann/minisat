@@ -742,7 +742,7 @@ lbool Solver::search(int nof_conflicts)
                 CRef cr = ca.alloc(learnt_clause, true);
                 learnts.push(cr);
                 attachClause(cr);
-                traceLearnedClause(ca[cr]);
+                traceLearntClause(ca[cr]);
                 claBumpActivity(ca[cr]);
                 uncheckedEnqueue(learnt_clause[0], cr);
             }
@@ -1120,7 +1120,7 @@ void Solver::setSimplifiedFile(const std::string & name, const std::string & hea
 
 int levelForAssert = 0;
 
-void Solver::trace(char label, int data)
+void Solver::trace(char label, int32_t data)
 {
     if (label == '>')
     {
@@ -1145,13 +1145,13 @@ void Solver::traceLiteral(char label, Lit literal)
         cancelNext = false;
         return;
     }
-    bool negated = sign(literal);
-    int variable = var(literal) + 1;
+    auto negated = sign(literal);
+    auto variable = var(literal) + 1;
     if (negated) variable = -variable;
     trace(label, variable);
 }
 
-void Solver::traceLearnedClause(const Clause& clause)
+void Solver::traceLearntClause(const Clause& clause)
 {
     trace('L', clause.id());
     trace('S', clause.size());
@@ -1169,7 +1169,7 @@ void Solver::traceRestart()
 }
 
 template<typename T>
-void writeToHeader(std::ofstream & file, const bool dryRun, const T & data, int & position)
+void writeToHeader(std::ofstream & file, const bool dryRun, const T & data, int32_t & position)
 {
     if (!dryRun)
     {
@@ -1179,20 +1179,20 @@ void writeToHeader(std::ofstream & file, const bool dryRun, const T & data, int 
     position += sizeof(data);
 }
 
-int Solver::writeHeader(const bool dryRun, const int numberOfRestarts)
+int32_t Solver::writeHeader(const bool dryRun, const int32_t numberOfRestarts)
 {
     if (!dryRun)
     {
         traceFile.close();
         traceFile.open(m_name, std::ios::binary | std::ios::out | std::ios::in);
     }
-    int headerSize;
+    int32_t headerSize;
     headerSize = sizeof(headerSize) + sizeof(numberOfRestarts);
     if (headerSize % 5 != 0)
     {
         headerSize += 5 - (headerSize % 5);
     }
-    int position = 0;
+    int32_t position = 0;
     writeToHeader(traceFile, dryRun, headerSize, position);
     writeToHeader(traceFile, dryRun, numberOfRestarts, position);
     assert(headerSize >= position);
@@ -1208,7 +1208,7 @@ void Solver::writeDummyHeader()
 {
     const auto headerSize = writeHeader(true, -1);
     const char c = 0;
-    for (int i = 0; i < headerSize; ++i)
+    for (int32_t i = 0; i < headerSize; ++i)
     {
         traceFile.write(&c, 1);
     }
