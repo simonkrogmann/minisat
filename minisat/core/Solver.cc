@@ -27,6 +27,11 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 using namespace Minisat;
 
+Literal toLiteral(const Lit & literal)
+{
+    return {var(literal) + 1, sign(literal)};
+}
+
 //=================================================================================================
 // Options:
 
@@ -497,7 +502,7 @@ void Solver::uncheckedEnqueue(Lit p, CRef from)
     assert(value(p) == l_Undef);
     if (!cancelNext)
     {
-        m_tracer->traceSetVariable({var(p), sign(p)});
+        m_tracer->traceSetVariable(toLiteral(p));
     }
     cancelNext = false;
     assigns[var(p)] = lbool(!sign(p));
@@ -564,7 +569,7 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-                m_tracer->traceConflict({var(p), sign(p)});
+                m_tracer->traceConflict(toLiteral(p));
             }else
                 uncheckedEnqueue(first, cr);
 
@@ -808,7 +813,7 @@ lbool Solver::search(int nof_conflicts)
             // Increase decision level and enqueue 'next'
             newDecisionLevel();
             m_tracer->traceNewDecisionLevel(decisionLevel());
-            m_tracer->traceBranch({var(next), sign(next)});
+            m_tracer->traceBranch(toLiteral(next));
             cancelNext = true;
             uncheckedEnqueue(next);
         }
@@ -890,7 +895,7 @@ lbool Solver::solve_()
         simplifiedInstance.push_back({});
         for (int j = 0; j < c.size(); j++)
         {
-            simplifiedInstance.back().push_back({var(c[j]), sign(c[j])});
+            simplifiedInstance.back().push_back(toLiteral(c[j]));
         }
     }
     m_tracer->writeSimplifiedInstance(simplifiedInstance, nVars());
@@ -899,7 +904,6 @@ lbool Solver::solve_()
     int curr_restarts = 0;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
-        // traceRestart();
         m_tracer->traceRestart();
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
@@ -1107,7 +1111,7 @@ void Solver::traceLearntClause(const Clause& clause)
 {
     std::vector<Literal> clauseVector;
     for(size_t i = 0; i < clause.size(); ++i) {
-        clauseVector.push_back({var(clause[i]), sign(clause[i])});
+        clauseVector.push_back(toLiteral(clause[i]));
     }
     m_tracer->traceLearntClause(clause.id(), clauseVector);
 }
