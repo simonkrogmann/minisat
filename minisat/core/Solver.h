@@ -299,7 +299,7 @@ protected:
 public:
     void inline setTracer(Tracer * tracer) { m_tracer = tracer; }
 private:
-    int32_t nextLearntID;
+    int32_t nextLearntID = 0;
     void traceLearntClause(const Clause& clause);
     bool cancelNext = false;
     Tracer * m_tracer;

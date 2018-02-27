@@ -101,7 +101,7 @@ int main(int argc, char** argv)
         S.setTracer(&tracer);
         printf("Writing trace to %s\n", trace_name.c_str());
         printf("Writing simplified problem to %s\n", simplified_name.c_str());
-
+        
         if (S.verbosity > 0){
             printf("============================[ Problem Statistics ]=============================\n");
             printf("|                                                                             |\n"); }

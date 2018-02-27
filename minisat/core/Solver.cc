@@ -82,7 +82,7 @@ Solver::Solver() :
     // Statistics: (formerly in 'SolverStats')
     //
   , solves(0), starts(0), decisions(0), rnd_decisions(0), propagations(0), conflicts(0)
-  , dec_vars(0), num_clauses(0), num_learnts(0), clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0), nextLearntID(0)
+  , dec_vars(0), num_clauses(0), num_learnts(0), clauses_literals(0), learnts_literals(0), max_literals(0), tot_literals(0)
 
   , watches            (WatcherDeleted(ca))
   , order_heap         (VarOrderLt(activity))
@@ -603,7 +603,8 @@ void Solver::reduceDB()
     // and clauses with activity smaller than 'extra_lim':
     for (i = j = 0; i < learnts.size(); i++){
         Clause& c = ca[learnts[i]];
-        if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim)) {
+        if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim))
+        {
             m_tracer->traceUnlearntClause(c.id());
             removeClause(learnts[i]);
         }
@@ -725,7 +726,6 @@ lbool Solver::search(int nof_conflicts)
     starts++;
 
     for (;;){
-        // Enter Decision Level
         CRef confl = propagate();
         if (confl != CRef_Undef){
             // CONFLICT
@@ -785,7 +785,6 @@ lbool Solver::search(int nof_conflicts)
                 Lit p = assumptions[decisionLevel()];
                 if (value(p) == l_True){
                     // Dummy decision level:
-                    assert(false);
                     newDecisionLevel();
                 }else if (value(p) == l_False){
                     analyzeFinal(~p, conflict);
@@ -884,8 +883,6 @@ lbool Solver::solve_()
     }
 
     nextLearntID = nClauses();
-
-
     std::vector<std::vector<Literal>> simplifiedInstance;
     for (int i = 0; i < clauses.size(); ++i)
     {
