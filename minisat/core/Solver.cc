@@ -235,8 +235,7 @@ bool Solver::satisfied(const Clause& c) const {
 // Revert to the state at given level (keeping all assignment at 'level' but not beyond).
 //
 void Solver::cancelUntil(int level) {
-    // Backtrack until
-    trace('<', level);
+    m_tracer->traceBacktrack(level);
     if (decisionLevel() > level){
         for (int c = trail.size()-1; c >= trail_lim[level]; c--){
             Var      x  = var(trail[c]);
@@ -496,8 +495,11 @@ void Solver::analyzeFinal(Lit p, LSet& out_conflict)
 void Solver::uncheckedEnqueue(Lit p, CRef from)
 {
     assert(value(p) == l_Undef);
-    // Set
-    traceLiteral('+', p);
+    if (!cancelNext)
+    {
+        m_tracer->traceSetVariable({var(p), sign(p)});
+    }
+    cancelNext = false;
     assigns[var(p)] = lbool(!sign(p));
     vardata[var(p)] = mkVarData(from, decisionLevel());
     trail.push_(p);
@@ -562,8 +564,7 @@ CRef Solver::propagate()
                 // Copy the remaining watches:
                 while (i < end)
                     *j++ = *i++;
-                // Conflict
-                traceLiteral('C', p);
+                m_tracer->traceConflict({var(p), sign(p)});
             }else
                 uncheckedEnqueue(first, cr);
 
@@ -603,7 +604,7 @@ void Solver::reduceDB()
     for (i = j = 0; i < learnts.size(); i++){
         Clause& c = ca[learnts[i]];
         if (c.size() > 2 && !locked(c) && (i < learnts.size() / 2 || c.activity() < extra_lim)) {
-            trace('U', c.id());
+            m_tracer->traceUnlearntClause(c.id());
             removeClause(learnts[i]);
         }
         else
@@ -807,8 +808,8 @@ lbool Solver::search(int nof_conflicts)
 
             // Increase decision level and enqueue 'next'
             newDecisionLevel();
-            trace('>', decisionLevel());
-            traceLiteral('B', next);
+            m_tracer->traceNewDecisionLevel(decisionLevel());
+            m_tracer->traceBranch({var(next), sign(next)});
             cancelNext = true;
             uncheckedEnqueue(next);
         }
@@ -884,24 +885,25 @@ lbool Solver::solve_()
 
     nextLearntID = nClauses();
 
-    simplifiedFile << "p " << nVars() << " " << nClauses() << std::endl;
+
+    std::vector<std::vector<Literal>> simplifiedInstance;
     for (int i = 0; i < clauses.size(); ++i)
     {
         Clause& c = ca[clauses[i]];
+        simplifiedInstance.push_back({});
         for (int j = 0; j < c.size(); j++)
         {
-            simplifiedFile << (sign(c[j]) ? "-" : "") << var(c[j]) << " ";
+            simplifiedInstance.back().push_back({var(c[j]), sign(c[j])});
         }
-        simplifiedFile << "0" << std::endl;
     }
-    simplifiedFile.close();
+    m_tracer->writeSimplifiedInstance(simplifiedInstance, nVars());
 
     // Search:
     int curr_restarts = 0;
     while (status == l_Undef){
         double rest_base = luby_restart ? luby(restart_inc, curr_restarts) : pow(restart_inc, curr_restarts);
         // traceRestart();
-        trace('R', curr_restarts);
+        m_tracer->traceRestart();
         status = search(rest_base * restart_first);
         if (!withinBudget()) break;
         curr_restarts++;
@@ -919,7 +921,6 @@ lbool Solver::solve_()
         ok = false;
 
     cancelUntil(0);
-    writeHeader(false, curr_restarts);
     return status;
 }
 
@@ -1105,112 +1106,11 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-
-void Solver::traceLiteral(char label, Lit literal)
-{
-    if (cancelNext)
-    {
-        assert(label == '+');
-        cancelNext = false;
-        return;
-    }
-    auto negated = sign(literal);
-    auto variable = var(literal) + 1;
-    if (negated) variable = -variable;
-    trace(label, variable);
-}
-
 void Solver::traceLearntClause(const Clause& clause)
 {
-    trace('L', clause.id());
-    trace('S', clause.size());
+    std::vector<Literal> clauseVector;
     for(size_t i = 0; i < clause.size(); ++i) {
-        traceLiteral('x', clause[i]);
+        clauseVector.push_back({var(clause[i]), sign(clause[i])});
     }
-}
-
-void Solver::setSimplifiedFile(const std::string & name, const std::string & header)
-{
-    simplifiedFile.open(name);
-    simplifiedFile << header;
-}
-
-void Solver::setTraceFile(const std::string & name)
-{
-    m_name = name;
-    traceFile.open(name, std::ios::binary | std::ios::out);
-    writeDummyHeader();
-}
-
-int levelForAssert = 0;
-
-void Solver::trace(char label, int32_t data)
-{
-    if (label == '>')
-    {
-        assert(data == levelForAssert + 1);
-        levelForAssert = data;
-    }
-    if (label == '<')
-    {
-        assert(data < levelForAssert || data == 0);
-        levelForAssert = data;
-    }
-    traceFile.write(&label, 1);
-    //traceFile << data;
-    traceFile.write(reinterpret_cast<const char *>(&data), sizeof(data));
-}
-
-void Solver::traceRestart()
-{
-    traceFile.close();
-    traceFile.open(m_name, std::ios::out | std::ios::trunc);
-    traceFile.close();
-    traceFile.open(m_name, std::ios::binary | std::ios::out);
-}
-
-template<typename T>
-void writeToHeader(std::ofstream & file, const bool dryRun, const T & data, int32_t & position)
-{
-    if (!dryRun)
-    {
-        file.seekp(position);
-        file.write(reinterpret_cast<const char *>(&data), sizeof(data));
-    }
-    position += sizeof(data);
-}
-
-int32_t Solver::writeHeader(const bool dryRun, const int32_t numberOfRestarts)
-{
-    if (!dryRun)
-    {
-        traceFile.close();
-        traceFile.open(m_name, std::ios::binary | std::ios::out | std::ios::in);
-    }
-    int32_t headerSize;
-    headerSize = sizeof(headerSize) + sizeof(numberOfRestarts);
-    if (headerSize % 5 != 0)
-    {
-        headerSize += 5 - (headerSize % 5);
-    }
-    int32_t position = 0;
-    writeToHeader(traceFile, dryRun, headerSize, position);
-    writeToHeader(traceFile, dryRun, numberOfRestarts, position);
-    assert(headerSize >= position);
-    if (!dryRun)
-    {
-        assert(position == traceFile.tellp());
-        traceFile.close();
-    }
-    return headerSize;
-}
-
-void Solver::writeDummyHeader()
-{
-    const auto headerSize = writeHeader(true, -1);
-    const char c = 0;
-    for (int32_t i = 0; i < headerSize; ++i)
-    {
-        traceFile.write(&c, 1);
-    }
+    m_tracer->traceLearntClause(clause.id(), clauseVector);
 }

@@ -12,17 +12,16 @@ struct Literal
 class Tracer
 {
 public:
-    Tracer(const std::string & traceFile, const std::string & simplifiedFile, const std::string & simplifiedHeader)
+    Tracer(const std::string & traceFile, const std::string & simplifiedFile, const std::string & instance_name)
     {
         setTraceFile(traceFile);
-        setSimplifiedFile(simplifiedFile, simplifiedHeader);
+        setSimplifiedFile(simplifiedFile, instance_name);
     }
 
     ~Tracer()
     {
         writeHeader(false, m_currentRestarts);
     }
-
 
     void inline traceBacktrack(int32_t level) { trace('<', level); }
     void inline traceNewDecisionLevel(int32_t level) { trace('>', level); }
@@ -43,6 +42,20 @@ public:
     void inline traceUnlearntClause(int32_t clause_id)
     {
         trace('U', clause_id);
+    }
+
+    void inline writeSimplifiedInstance(const std::vector<std::vector<Literal>> & instance, int32_t numVars)
+    {
+        simplifiedFile << "p " << numVars << " " << instance.size() << std::endl;
+        for (const auto & clause : instance)
+        {
+            for (const auto & literal : clause)
+            {
+                simplifiedFile << (literal.negated ? "-" : "") << literal.variable << " ";
+            }
+            simplifiedFile << "0" << std::endl;
+        }
+        simplifiedFile.close();
     }
 
 private:
@@ -113,10 +126,10 @@ private:
         }
     }
 
-    void inline setSimplifiedFile(const std::string & name, const std::string & header)
+    void inline setSimplifiedFile(const std::string & name, const std::string & instance_name)
     {
         simplifiedFile.open(name);
-        simplifiedFile << header;
+        simplifiedFile << "c Simplified from " << instance_name << std::endl;
     }
 
     void inline setTraceFile(const std::string & name)

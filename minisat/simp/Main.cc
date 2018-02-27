@@ -97,10 +97,10 @@ int main(int argc, char** argv)
         const auto trace_name = out_name + ".trace";
         const auto solution_name = out_name + ".solution";
         const auto simplified_name = out_name + ".simplified";
+        Tracer tracer(trace_name, simplified_name, in_name);
+        S.setTracer(&tracer);
         printf("Writing trace to %s\n", trace_name.c_str());
-        S.setTraceFile(trace_name);
         printf("Writing simplified problem to %s\n", simplified_name.c_str());
-        S.setSimplifiedFile(simplified_name, "c Simplified from " + in_name + "\n");
 
         if (S.verbosity > 0){
             printf("============================[ Problem Statistics ]=============================\n");
