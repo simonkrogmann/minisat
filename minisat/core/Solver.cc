@@ -1105,37 +1105,6 @@ void Solver::garbageCollect()
     to.moveTo(ca);
 }
 
-void Solver::setTraceFile(const std::string & name)
-{
-    m_name = name;
-    traceFile.open(name, std::ios::binary | std::ios::out);
-    writeDummyHeader();
-}
-
-void Solver::setSimplifiedFile(const std::string & name, const std::string & header)
-{
-    simplifiedFile.open(name);
-    simplifiedFile << header;
-}
-
-int levelForAssert = 0;
-
-void Solver::trace(char label, int32_t data)
-{
-    if (label == '>')
-    {
-        assert(data == levelForAssert + 1);
-        levelForAssert = data;
-    }
-    if (label == '<')
-    {
-        assert(data < levelForAssert || data == 0);
-        levelForAssert = data;
-    }
-    traceFile.write(&label, 1);
-    //traceFile << data;
-    traceFile.write(reinterpret_cast<const char *>(&data), sizeof(data));
-}
 
 void Solver::traceLiteral(char label, Lit literal)
 {
@@ -1158,6 +1127,38 @@ void Solver::traceLearntClause(const Clause& clause)
     for(size_t i = 0; i < clause.size(); ++i) {
         traceLiteral('x', clause[i]);
     }
+}
+
+void Solver::setSimplifiedFile(const std::string & name, const std::string & header)
+{
+    simplifiedFile.open(name);
+    simplifiedFile << header;
+}
+
+void Solver::setTraceFile(const std::string & name)
+{
+    m_name = name;
+    traceFile.open(name, std::ios::binary | std::ios::out);
+    writeDummyHeader();
+}
+
+int levelForAssert = 0;
+
+void Solver::trace(char label, int32_t data)
+{
+    if (label == '>')
+    {
+        assert(data == levelForAssert + 1);
+        levelForAssert = data;
+    }
+    if (label == '<')
+    {
+        assert(data < levelForAssert || data == 0);
+        levelForAssert = data;
+    }
+    traceFile.write(&label, 1);
+    //traceFile << data;
+    traceFile.write(reinterpret_cast<const char *>(&data), sizeof(data));
 }
 
 void Solver::traceRestart()
