@@ -1,17 +1,24 @@
+#pragma once
+
 #include <string>
 #include <fstream>
 #include <cassert>
 #include <vector>
 
-struct Literal
-{
-    int32_t variable;
-    bool negated;
-};
+// If you want to use your own SAT solver instead of Minisat in satexplorer,
+// use this class to write the trace file. Only the public functions should be
+// relevant. Make sure the object is destroyed properly after the tracing,
+// so the header can be written.
 
 class Tracer
 {
 public:
+    struct Literal
+    {
+        int32_t variable; // number used in the cnf file
+        bool negated;
+    };
+
     Tracer(const std::string & traceFile, const std::string & simplifiedFile, const std::string & instance_name)
     {
         setTraceFile(traceFile);
@@ -23,12 +30,14 @@ public:
         writeHeader(false, m_currentRestarts);
     }
 
-    void inline traceBacktrack(int32_t level) { trace('<', level); }
-    void inline traceNewDecisionLevel(int32_t level) { trace('>', level); }
-    void inline traceBranch(const Literal & literal) { traceLiteral('B', literal); }
+    // functions to trace events that happen in Minisat and many other popular SAT solvers
+    void inline traceBacktrack(int32_t level)             { trace('<', level); }
+    void inline traceNewDecisionLevel(int32_t level)      { trace('>', level); }
+    // Don't call traceSetVariable for a literal just used for branching
+    void inline traceBranch(const Literal & literal)      { traceLiteral('B', literal); }
     void inline traceSetVariable(const Literal & literal) { traceLiteral('+', literal); }
-    void inline traceConflict(const Literal & literal) { traceLiteral('C', literal); }
-    void inline traceRestart() { trace('R', m_currentRestarts); ++m_currentRestarts; }
+    void inline traceConflict(const Literal & literal)    { traceLiteral('C', literal); }
+    void inline traceRestart()                            { trace('R', m_currentRestarts++); }
 
     void inline traceLearntClause(int32_t clause_id, const std::vector<Literal> & clause)
     {
@@ -44,6 +53,8 @@ public:
         trace('U', clause_id);
     }
 
+    // if a simplified instance is to be used for rendering in satexplorer (flag: -s),
+    // it needs to be written with this function
     void inline writeSimplifiedInstance(const std::vector<std::vector<Literal>> & instance, int32_t numVars)
     {
         simplifiedFile << "p " << numVars << " " << instance.size() << std::endl;
@@ -116,6 +127,8 @@ private:
         }
         return headerSize;
     }
+
+    // Makes space at the beginning of the file to write the Header later
     void inline writeDummyHeader()
     {
         const auto headerSize = writeHeader(true, -1);

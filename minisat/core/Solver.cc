@@ -27,7 +27,7 @@ OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWA
 
 using namespace Minisat;
 
-Literal toLiteral(const Lit & literal)
+Tracer::Literal toLiteral(const Lit & literal)
 {
     return {var(literal) + 1, sign(literal)};
 }
@@ -888,7 +888,7 @@ lbool Solver::solve_()
     }
 
     nextLearntID = nClauses();
-    std::vector<std::vector<Literal>> simplifiedInstance;
+    std::vector<std::vector<Tracer::Literal>> simplifiedInstance;
     for (int i = 0; i < clauses.size(); ++i)
     {
         Clause& c = ca[clauses[i]];
@@ -1109,7 +1109,7 @@ void Solver::garbageCollect()
 
 void Solver::traceLearntClause(const Clause& clause)
 {
-    std::vector<Literal> clauseVector;
+    std::vector<Tracer::Literal> clauseVector;
     for(size_t i = 0; i < clause.size(); ++i) {
         clauseVector.push_back(toLiteral(clause[i]));
     }
