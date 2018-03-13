@@ -2,22 +2,23 @@
 Modifications from original
 
 Generate a tracefile with
-./minisat [options] <problem-file> <solution-file> <trace-file>
+./minisat [options] <problem-file> <output-folder>
 This offers information about the operation of the solver.
 The following events are recorded:
-< Backtrack to <level>
-+ Set [not] <variable>
-C Conflict with [not] <variable>
-> Enter decision level <level>
-B Branch on [not] <variable>
-R Restart <number of restarts>
+- Backtracking
+- Setting a variable
+- Conflict with a variable
+- Enter decision level
+- Branch on a variable
+- Restart
+- Learn a clause
+- Unlearn a clause
 
-Each event is written into the file as:
-<event character><4 byte binary representation of variable/level>
-The integer is negative for false variables.
-
-This data can be used for visualization, for example highlighting the
-currently set variables in an incidence graph.
+This data can be used for visualization in satexplorer (github.com/simonkrogmann/satexplorer),
+for example highlighting the currently set variables in an incidence graph.
+The functions in the header file minisat/core/Tracer.hpp are called from the
+appropriate points in Minisat to allow for tracing. This file can be used to
+integrate tracing into other SAT solvers.
 
 ================================================================================
 Quick Install
